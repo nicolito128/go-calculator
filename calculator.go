@@ -112,16 +112,10 @@ func Resolve(expression string) (float64, error) {
 			i--
 		} else if tokens[i] == ')' {
 			for len(operations) > 0 && operations[len(operations)-1] != '(' {
-				valB := pop(&values)
-				valA := pop(&values)
-				op := pop(&operations)
-
-				result, err := ApplyOperation(valA, valB, op)
+				err := resolveOperation(&values, &operations)
 				if err != nil {
 					return 0, err
 				}
-
-				values = append(values, result)
 			}
 
 			// remove the last opening brace
@@ -134,16 +128,10 @@ func Resolve(expression string) (float64, error) {
 				continue
 			} else {
 				for len(operations) > 0 && Precedence(string(operations[len(operations)-1])) >= Precedence(string(tokens[i])) {
-					valB := pop(&values)
-					valA := pop(&values)
-					op := pop(&operations)
-
-					result, err := ApplyOperation(valA, valB, op)
+					err := resolveOperation(&values, &operations)
 					if err != nil {
 						return 0, err
 					}
-
-					values = append(values, result)
 				}
 
 				operations = append(operations, tokens[i])
@@ -159,20 +147,29 @@ func Resolve(expression string) (float64, error) {
 	}
 
 	for len(operations) > 0 {
-		valB := pop(&values)
-		valA := pop(&values)
-		op := pop(&operations)
-
-		// valA (the last) is tecnically the denominator for division
-		result, err := ApplyOperation(valA, valB, op)
+		err := resolveOperation(&values, &operations)
 		if err != nil {
 			return 0, err
 		}
-
-		values = append(values, result)
 	}
 
 	return pop(&values), nil
+}
+
+// resolveOperation take the last two values and the last operation
+// then apply the operation to the values and return an error
+func resolveOperation(values *[]float64, operations *[]rune) error {
+	valB := pop(values)
+	valA := pop(values)
+	op := pop(operations)
+
+	result, err := ApplyOperation(valA, valB, op)
+	if err != nil {
+		return err
+	}
+
+	*values = append(*values, result)
+	return nil
 }
 
 // pop removes and returns the last element of the values slice.
