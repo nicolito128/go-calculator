@@ -3,3 +3,6 @@ ex1:
 
 ex2:
 	go run examples/ex2/main.go
+
+test:
+	go test -v ./calculator_test.go
