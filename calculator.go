@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-var bitSize = 64
 var emptyOperationError = errors.New("Operation not entered!")
 var convertError = errors.New("The operation cannot be converted to numeric values.")
 var divisionByZero = errors.New("Division by zero!")
