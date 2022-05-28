@@ -112,6 +112,12 @@ func Resolve(expression string) (float64, error) {
 			i--
 		} else if tokens[i] == ')' {
 			for len(operations) > 0 && operations[len(operations)-1] != '(' {
+				if len(operations) > 0 {
+					if len(values) <= 1 {
+						return float64(0), errors.New("Invalid expression!")
+					}
+				}
+
 				err := resolveOperation(&values, &operations)
 				if err != nil {
 					return 0, err
@@ -128,6 +134,12 @@ func Resolve(expression string) (float64, error) {
 				continue
 			} else {
 				for len(operations) > 0 && Precedence(string(operations[len(operations)-1])) >= Precedence(string(tokens[i])) {
+					if len(operations) > 0 {
+						if len(values) <= 1 {
+							return float64(0), errors.New("Invalid expression!")
+						}
+					}
+
 					err := resolveOperation(&values, &operations)
 					if err != nil {
 						return 0, err
@@ -143,6 +155,12 @@ func Resolve(expression string) (float64, error) {
 			topVal *= (-1)
 			values[len(values)-1] = topVal
 			negative = false
+		}
+	}
+
+	if len(operations) > 0 {
+		if len(values) <= 1 {
+			return float64(0), errors.New("Invalid expression!")
 		}
 	}
 
