@@ -2,7 +2,6 @@ package calculator
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -89,6 +88,30 @@ func Resolve(expression string) (float64, error) {
 			}
 
 			operations = append(operations, tokens[i])
+		case tokens[i] == ')':
+			j := i + 1
+			if j < len(tokens) {
+				if !IsOperation(tokens[j]) || tokens[j] == '(' || IsDigit(tokens[j]) {
+					operations = append(operations, '*')
+				}
+			}
+
+			for len(operations) > 0 && operations[len(operations)-1] != '(' {
+				if len(operations) > 0 {
+					if len(values) <= 1 {
+						return float64(0), errors.New("invalid expression")
+					}
+				}
+
+				err := resolveOperation(&values, &operations)
+				if err != nil {
+					return 0, err
+				}
+			}
+			// remove the last opening brace
+			if len(operations) > 0 {
+				pop(&operations)
+			}
 		case IsDigit(tokens[i]):
 			// Contain the final number
 			var val float64
@@ -127,30 +150,6 @@ func Resolve(expression string) (float64, error) {
 
 			values = append(values, val)
 			i--
-		case tokens[i] == ')':
-			for len(operations) > 0 && operations[len(operations)-1] != '(' {
-				if len(operations) > 0 {
-					if len(values) <= 1 {
-						return float64(0), errors.New("invalid expression")
-					}
-				}
-
-				err := resolveOperation(&values, &operations)
-				if err != nil {
-					return 0, err
-				}
-			}
-			// remove the last opening brace
-			if len(operations) > 0 {
-				pop(&operations)
-			}
-
-			j := i + 1
-			if len(values) > 0 && len(operations) == 0 && j < len(tokens) {
-				if !IsOperation(tokens[j]) || tokens[j] == '(' || IsDigit(tokens[j]) {
-					operations = append(operations, '*')
-				}
-			}
 		case tokens[i] == 'i':
 			k := i - 1
 			if i == 0 ||
@@ -214,15 +213,12 @@ func resolveOperation(values *[]float64, operations *[]rune) error {
 	valA := pop(values)
 	op := pop(operations)
 
-	fmt.Println(valA, string(op), valB)
-
 	result, err := ApplyOperation(valA, valB, op)
 	if err != nil {
 		return err
 	}
 
 	*values = append(*values, result)
-	fmt.Println(*values, string(*operations))
 	return nil
 }
 
