@@ -6,9 +6,9 @@ import (
 	"strings"
 )
 
-var emptyOperationError = errors.New("Operation not entered!")
-var convertError = errors.New("The operation cannot be converted to numeric values.")
-var divisionByZero = errors.New("Division by zero!")
+var errEmptyOperation = errors.New("operation not entered")
+var errParseOperation = errors.New("operation cannot be parsed to numeric values")
+var errDivisionByZero = errors.New("division by zero")
 
 // Precedence returns the precedence of the operation.
 // "+, -": 1; "*, /": 2; "^": 3
@@ -35,7 +35,7 @@ func ApplyOperation(a, b float64, symbol rune) (float64, error) {
 		return (a * b), nil
 	case '/':
 		if b == 0 {
-			return 0, divisionByZero
+			return 0, errDivisionByZero
 		}
 
 		return (a / b), nil
@@ -53,7 +53,7 @@ func IsDigit(r rune) bool {
 // Resolve resolves the expression passed as parameter.
 func Resolve(expression string) (float64, error) {
 	if expression == "" {
-		return 0, emptyOperationError
+		return 0, errEmptyOperation
 	}
 	expression = strings.ReplaceAll(expression, " ", "")
 	expression = strings.ReplaceAll(expression, ",", ".")
@@ -65,7 +65,7 @@ func Resolve(expression string) (float64, error) {
 	tokens := []rune(expression)
 	for i := 0; i < len(tokens); i++ {
 		if Precedence(string(tokens[i])) == 0 && !IsDigit(tokens[i]) && tokens[i] != '(' && tokens[i] != ')' {
-			return 0, convertError
+			return 0, errParseOperation
 		}
 
 		// Current token is an opening
@@ -114,7 +114,7 @@ func Resolve(expression string) (float64, error) {
 			for len(operations) > 0 && operations[len(operations)-1] != '(' {
 				if len(operations) > 0 {
 					if len(values) <= 1 {
-						return float64(0), errors.New("Invalid expression!")
+						return float64(0), errors.New("invalid expression")
 					}
 				}
 
@@ -136,7 +136,7 @@ func Resolve(expression string) (float64, error) {
 				for len(operations) > 0 && Precedence(string(operations[len(operations)-1])) >= Precedence(string(tokens[i])) {
 					if len(operations) > 0 {
 						if len(values) <= 1 {
-							return float64(0), errors.New("Invalid expression!")
+							return float64(0), errors.New("invalid expression")
 						}
 					}
 
@@ -160,7 +160,7 @@ func Resolve(expression string) (float64, error) {
 
 	if len(operations) > 0 {
 		if len(values) <= 1 {
-			return float64(0), errors.New("Invalid expression!")
+			return float64(0), errors.New("invalid expression")
 		}
 	}
 
