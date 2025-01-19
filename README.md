@@ -3,6 +3,8 @@ A simple calculator module written in Go.
 
 It accept the following operations: `+` (addition), `-` (subtraction), `*` (product), `/` (division) and `^` (power). Also, you can use parenthesis association `()`.
 
+The following mathematical constants are available for use in expressions: `e pi phi ln10 ln2`
+
 ## Getting started
 
 Get the module with:
