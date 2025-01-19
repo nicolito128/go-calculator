@@ -1,9 +1,14 @@
 # Go Calculator
-A simple console calculator written in Go.
+A simple calculator module written in Go.
 
-It accept the following operations: `+` (addition), `-` (subtraction), `*` (product) and `/` (division). Also, you can use parenthesis association `()`.
+It accept the following operations: `+` (addition), `-` (subtraction), `*` (product), `/` (division) and `^` (power). Also, you can use parenthesis association `()`.
 
-## How to use
+## Getting started
+
+Get the module with:
+
+    go get github.com/nicolito128/go-calculator
+
 Import the module:
 
 ```go
