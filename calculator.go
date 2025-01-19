@@ -2,7 +2,9 @@ package calculator
 
 import (
 	"errors"
+	"fmt"
 	"math"
+	"strconv"
 	"strings"
 )
 
@@ -50,29 +52,44 @@ func IsDigit(r rune) bool {
 	return r >= '0' && r <= '9'
 }
 
+func IsOperation(r rune) bool {
+	return r == '+' || r == '-' || r == '*' || r == '/' || r == '^'
+}
+
 // Resolve resolves the expression passed as parameter.
 func Resolve(expression string) (float64, error) {
 	if expression == "" {
 		return 0, errEmptyOperation
 	}
+	expression = strings.ToLower(expression)
 	expression = strings.ReplaceAll(expression, " ", "")
 	expression = strings.ReplaceAll(expression, ",", ".")
+	expression = strings.ReplaceAll(expression, ")(", ")*(")
+
+	// constants
+	expression = parseConstants(expression)
 
 	var values []float64
 	var operations []rune
 	var negative bool
 
 	tokens := []rune(expression)
-	for i := 0; i < len(tokens); i++ {
+	i := 0
+	for i < len(tokens) {
 		if Precedence(string(tokens[i])) == 0 && !IsDigit(tokens[i]) && tokens[i] != '(' && tokens[i] != ')' {
 			return 0, errParseOperation
 		}
 
 		// Current token is an opening
 		// brace, so push to operations stack
-		if tokens[i] == '(' {
+		switch {
+		case tokens[i] == '(':
+			if len(values) > 0 && len(operations) == 0 {
+				operations = append(operations, '*')
+			}
+
 			operations = append(operations, tokens[i])
-		} else if IsDigit(tokens[i]) {
+		case IsDigit(tokens[i]):
 			// Contain the final number
 			var val float64
 			var existsDecimal bool
@@ -110,7 +127,7 @@ func Resolve(expression string) (float64, error) {
 
 			values = append(values, val)
 			i--
-		} else if tokens[i] == ')' {
+		case tokens[i] == ')':
 			for len(operations) > 0 && operations[len(operations)-1] != '(' {
 				if len(operations) > 0 {
 					if len(values) <= 1 {
@@ -123,31 +140,45 @@ func Resolve(expression string) (float64, error) {
 					return 0, err
 				}
 			}
-
 			// remove the last opening brace
 			if len(operations) > 0 {
 				pop(&operations)
 			}
-		} else {
-			if tokens[i] == '-' && (i == 0 || tokens[i-1] == '*' || tokens[i-1] == '/' || tokens[i-1] == '+' || tokens[i-1] == '-' || tokens[i-1] == '^' || tokens[i-1] == '(' || tokens[i-1] == ')') {
+
+			j := i + 1
+			if len(values) > 0 && len(operations) == 0 && j < len(tokens) {
+				if !IsOperation(tokens[j]) || tokens[j] == '(' || IsDigit(tokens[j]) {
+					operations = append(operations, '*')
+				}
+			}
+		case tokens[i] == 'i':
+			k := i - 1
+			if i == 0 ||
+				tokens[k] == '*' ||
+				tokens[k] == '/' ||
+				tokens[k] == '+' ||
+				tokens[k] == '-' ||
+				tokens[k] == '^' ||
+				tokens[k] == '(' ||
+				tokens[k] == ')' {
 				negative = true
 				continue
-			} else {
-				for len(operations) > 0 && Precedence(string(operations[len(operations)-1])) >= Precedence(string(tokens[i])) {
-					if len(operations) > 0 {
-						if len(values) <= 1 {
-							return float64(0), errors.New("invalid expression")
-						}
-					}
-
-					err := resolveOperation(&values, &operations)
-					if err != nil {
-						return 0, err
+			}
+		default:
+			for len(operations) > 0 && Precedence(string(operations[len(operations)-1])) >= Precedence(string(tokens[i])) {
+				if len(operations) > 0 {
+					if len(values) <= 1 {
+						return float64(0), errors.New("invalid expression")
 					}
 				}
 
-				operations = append(operations, tokens[i])
+				err := resolveOperation(&values, &operations)
+				if err != nil {
+					return 0, err
+				}
 			}
+
+			operations = append(operations, tokens[i])
 		}
 
 		if negative {
@@ -156,6 +187,8 @@ func Resolve(expression string) (float64, error) {
 			values[len(values)-1] = topVal
 			negative = false
 		}
+
+		i++
 	}
 
 	if len(operations) > 0 {
@@ -181,12 +214,15 @@ func resolveOperation(values *[]float64, operations *[]rune) error {
 	valA := pop(values)
 	op := pop(operations)
 
+	fmt.Println(valA, string(op), valB)
+
 	result, err := ApplyOperation(valA, valB, op)
 	if err != nil {
 		return err
 	}
 
 	*values = append(*values, result)
+	fmt.Println(*values, string(*operations))
 	return nil
 }
 
@@ -197,4 +233,20 @@ func pop[T any](arr *[]T) T {
 	// Remove last element
 	*arr = (*arr)[:len(*arr)-1]
 	return top
+}
+
+func parseConstants(exp string) string {
+	// format
+	e := strconv.FormatFloat(math.E, 'f', -1, 64)
+	pi := strconv.FormatFloat(math.Pi, 'f', -1, 64)
+	phi := strconv.FormatFloat(math.Phi, 'f', -1, 64)
+	ln10 := strconv.FormatFloat(math.Ln10, 'f', -1, 64)
+	ln2 := strconv.FormatFloat(math.Ln2, 'f', -1, 64)
+	// replace
+	exp = strings.ReplaceAll(exp, "e", e)
+	exp = strings.ReplaceAll(exp, "pi", pi)
+	exp = strings.ReplaceAll(exp, "phi", phi)
+	exp = strings.ReplaceAll(exp, "ln10", ln10)
+	exp = strings.ReplaceAll(exp, "ln2", ln2)
+	return exp
 }

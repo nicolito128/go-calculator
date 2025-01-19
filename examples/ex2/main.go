@@ -12,7 +12,7 @@ import (
 func main() {
 	fmt.Println("Calculator!")
 	fmt.Println("-- Enter a new inline-operation and press enter.")
-	fmt.Println("-- If you want to end the calculator enter 'e' or 'end' and press enter.")
+	fmt.Println("-- If you want to end the calculator enter the word 'exit' and press enter.")
 	scanner := bufio.NewScanner(os.Stdin)
 
 	var line string
@@ -20,7 +20,7 @@ func main() {
 		scanner.Scan()
 		line = scanner.Text()
 
-		if strings.ToLower(line) == "e" || strings.ToLower(line) == "end" {
+		if strings.ToLower(line) == "exit" {
 			fmt.Println("See you later! -- PROGRAM END")
 			break
 		}
